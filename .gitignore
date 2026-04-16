@@ -1,0 +1,134 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+*.swo
+*~
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+*.sublime-workspace
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Flutter/Dart/Pub related
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+pubspec.lock
+.pub-cache/
+.pub/
+/build/
+/coverage/
+.coverage
+
+# Generated Dart files
+*.g.dart
+*.config.dart
+*.chopper.dart
+
+# Symbolication related
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# iOS/macOS specific
+ios/Pods/
+ios/Podfile.lock
+ios/.symlinks/
+ios/.generated/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+macos/Pods/
+macos/Podfile.lock
+macos/.symlinks/
+macos/.generated/
+macos/Flutter/Flutter.framework
+macos/Flutter/Flutter.podspec
+
+# Android specific
+android/local.properties
+android/key.properties
+android/.gradle/
+android/captures/
+android/gradlew
+android/gradlew.bat
+/android/**/local.properties
+/android/**/GeneratedPluginRegistrant.java
+/android/app/debug
+/android/app/profile
+/android/app/release
+android/.gradle
+android/app/local.properties
+*.jks
+*.keystore
+
+# Windows specific
+windows/flutter/ephemeral/
+.windows/
+
+# Linux specific
+linux/flutter/ephemeral/
+.linux/
+
+# Web specific
+web/
+.web/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+.env.*.secret
+firebase_credentials.json
+
+# OS
+Thumbs.db
+.AppleDouble
+.LSOverride
+*.zip
+*.tar.gz
+
+# Testing
+.test/
+test/.dart_tool/
+
+# IDE generated files
+.classpath
+.c9/
+.cproject
+.project
+.pydevproject
+.settings/
+.vscode-test/
+.vscode_test/
+
+# IDE temp files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Generated files that shouldn't be committed
+lib/generated/
+lib/l10n/
+
+# Machine-specific
+.dart_code_metrics.json
