@@ -36,6 +36,16 @@ class AuthService {
     return Usuario.fromJson(response.data as Map<String, dynamic>);
   }
 
+  /// Exchanges a refresh token for a new access + refresh token pair.
+  /// Returns the response map with `access_token` and `refresh_token`.
+  Future<Map<String, dynamic>> refresh(String refreshToken) async {
+    final response = await _dio.post(
+      '/auth/refresh',
+      data: {'refresh_token': refreshToken},
+    );
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<void> logout(String token) async {
     try {
       await _dio.post(

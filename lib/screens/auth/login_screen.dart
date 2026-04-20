@@ -74,40 +74,40 @@ class _LoginScreenState extends State<LoginScreen> {
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // ── Logo ────────────────────────────────────────────
-                  Center(
-                    child: Container(
-                      width: 72,
-                      height: 72,
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                            color: AppTheme.primary.withAlpha(130), width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.primary.withAlpha(50),
-                            blurRadius: 24,
-                            spreadRadius: 2,
-                          )
-                        ],
-                      ),
-                      child: const Icon(Icons.car_repair_rounded,
-                          size: 38, color: AppTheme.primary),
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surface,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                          color: AppTheme.primary.withAlpha(130), width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primary.withAlpha(50),
+                          blurRadius: 24,
+                          spreadRadius: 2,
+                        )
+                      ],
                     ),
+                    child: const Icon(Icons.car_repair_rounded,
+                        size: 38, color: AppTheme.primary),
                   ),
                   const SizedBox(height: 32),
 
                   // ── Heading ─────────────────────────────────────────
                   Text('Bienvenido de vuelta',
+                      textAlign: TextAlign.center,
                       style: Theme.of(context)
                           .textTheme
                           .headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
                   Text('Inicia sesión para continuar',
+                      textAlign: TextAlign.center,
                       style: Theme.of(context)
                           .textTheme
                           .bodyMedium

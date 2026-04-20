@@ -4,6 +4,8 @@ import 'core/router.dart';
 import 'core/theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/vehiculo_provider.dart';
+import 'providers/incidente_provider.dart';
+import 'providers/notificacion_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +30,8 @@ class _EmergenciAutoAppState extends State<EmergenciAutoApp> {
       providers: [
         ChangeNotifierProvider.value(value: widget.authProvider),
         ChangeNotifierProvider(create: (_) => VehiculoProvider()),
+        ChangeNotifierProvider(create: (_) => IncidenteProvider()),
+        ChangeNotifierProvider(create: (_) => NotificacionProvider()),
       ],
       child: MaterialApp.router(
         title: 'EmergenciAuto',

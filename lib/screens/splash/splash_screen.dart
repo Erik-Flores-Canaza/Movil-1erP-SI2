@@ -49,8 +49,10 @@ class _SplashScreenState extends State<SplashScreen>
     await context.read<AuthProvider>().initialize();
     if (!mounted) return;
 
-    if (context.read<AuthProvider>().isAuthenticated) {
-      context.go('/home');
+    final auth = context.read<AuthProvider>();
+    if (auth.isAuthenticated) {
+      final rol = auth.user?.rol;
+      context.go(rol == 'tecnico' ? '/tecnico-home' : '/home');
     } else {
       context.go('/login');
     }

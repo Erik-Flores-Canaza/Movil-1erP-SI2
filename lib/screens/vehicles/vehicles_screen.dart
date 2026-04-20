@@ -41,20 +41,27 @@ class _VehiclesScreenState extends State<VehiclesScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Eliminar vehículo'),
-        content: Text(
-            '¿Eliminar ${v.marca} ${v.modelo} (${v.placa})? Esta acción no se puede deshacer.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancelar',
-                style: TextStyle(color: AppTheme.textSecondary)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Eliminar',
-                style: TextStyle(color: AppTheme.error)),
-          ),
-        ],
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('¿Eliminar ${v.marca} ${v.modelo} (${v.placa})? Esta acción no se puede deshacer.'),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.error,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Sí, eliminar'),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        ),
       ),
     );
 
