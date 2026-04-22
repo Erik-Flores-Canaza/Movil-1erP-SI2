@@ -422,6 +422,7 @@ class _TecnicoHomeScreenState extends State<TecnicoHomeScreen> {
                         onCompletar: _completarOrden,
                         onActualizarUbicacion: _actualizarUbicacion,
                         onReportarLlegada: _reportarLlegada,
+                        onChat: () => context.push('/chat/${_orden!.incidenteId}'),
                       )
                     else
                       _NoOrdenCard(),
@@ -445,6 +446,7 @@ class _OrdenActivaCard extends StatelessWidget {
   final VoidCallback onCompletar;
   final VoidCallback onActualizarUbicacion;
   final VoidCallback onReportarLlegada;
+  final VoidCallback onChat;
 
   const _OrdenActivaCard({
     required this.orden,
@@ -455,6 +457,7 @@ class _OrdenActivaCard extends StatelessWidget {
     required this.onCompletar,
     required this.onActualizarUbicacion,
     required this.onReportarLlegada,
+    required this.onChat,
   });
 
   Color get _estadoColor {
@@ -621,6 +624,22 @@ class _OrdenActivaCard extends StatelessWidget {
                 const SizedBox(height: 20),
                 const Divider(),
                 const SizedBox(height: 14),
+
+                // ── Chat con el cliente ────────────────────────────────
+                OutlinedButton.icon(
+                  onPressed: onChat,
+                  icon: const Icon(Icons.chat_rounded,
+                      color: AppTheme.secondary),
+                  label: const Text(
+                    'Chat con el cliente',
+                    style: TextStyle(color: AppTheme.secondary),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppTheme.secondary),
+                    minimumSize: const Size(double.infinity, 44),
+                  ),
+                ),
+                const SizedBox(height: 10),
 
                 // ── Actualizar ubicación ───────────────────────────────
                 OutlinedButton.icon(

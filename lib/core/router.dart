@@ -12,6 +12,8 @@ import '../screens/emergency/monitor_screen.dart';
 import '../screens/emergency/my_emergencies_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/tecnico/tecnico_home_screen.dart';
+import '../screens/payment/payment_screen.dart';
+import '../screens/chat/chat_screen.dart';
 
 GoRouter createRouter(AuthProvider authProvider) {
   return GoRouter(
@@ -127,6 +129,31 @@ GoRouter createRouter(AuthProvider authProvider) {
           key: state.pageKey,
           child: const NotificationsScreen(),
           transitionsBuilder: _slideFromRight,
+        ),
+      ),
+
+      // ── Chat (shared client + técnico) ────────────────────────────────
+      GoRoute(
+        path: '/chat/:id',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: ChatScreen(
+            incidenteId: state.pathParameters['id']!,
+          ),
+          transitionsBuilder: _slideFromRight,
+        ),
+      ),
+
+      // ── Payment (cliente) ──────────────────────────────────────────────
+      GoRoute(
+        path: '/payment/:id',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: PaymentScreen(
+            incidenteId: state.pathParameters['id']!,
+            descripcion: state.uri.queryParameters['desc'],
+          ),
+          transitionsBuilder: _slideFromBottom,
         ),
       ),
 

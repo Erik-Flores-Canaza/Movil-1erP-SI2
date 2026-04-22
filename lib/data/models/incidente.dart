@@ -115,6 +115,7 @@ class Incidente {
   final String? vehiculoId;
   final AsignacionResumen? asignacion;
   final List<Evidencia> evidencias;
+  final bool pagado;
 
   const Incidente({
     required this.id,
@@ -129,6 +130,7 @@ class Incidente {
     this.vehiculoId,
     this.asignacion,
     this.evidencias = const [],
+    this.pagado = false,
   });
 
   factory Incidente.fromJson(Map<String, dynamic> json) => Incidente(
@@ -152,6 +154,7 @@ class Incidente {
                 ?.map((e) => Evidencia.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
+        pagado: json['pagado'] as bool? ?? false,
       );
 
   /// Human-readable label for estado

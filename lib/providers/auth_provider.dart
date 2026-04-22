@@ -4,6 +4,7 @@ import '../data/models/usuario.dart';
 import '../data/services/auth_service.dart';
 import '../data/services/usuario_service.dart';
 import '../core/constants.dart';
+import '../core/dio_client.dart';
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
@@ -14,6 +15,13 @@ class AuthProvider extends ChangeNotifier {
   AuthStatus _status = AuthStatus.unknown;
   Usuario? _user;
   String? _token;
+
+  AuthProvider() {
+    // When the interceptor refreshes a token silently, keep _token in sync.
+    DioClient.instance.onTokenRefreshed = (newToken) {
+      _token = newToken;
+    };
+  }
 
   AuthStatus get status => _status;
   Usuario? get user => _user;
@@ -32,6 +40,8 @@ class AuthProvider extends ChangeNotifier {
     if (saved != null) {
       try {
         _token = saved;
+        final savedRefresh = prefs.getString(AppConstants.refreshTokenKey);
+        DioClient.instance.setRefreshToken(savedRefresh);
         _user = await _usuarioService.getMe(saved);
         if (!_allowedRoles.contains(_user!.rol)) {
           await _clearSession();
@@ -62,11 +72,10 @@ class AuthProvider extends ChangeNotifier {
     try {
       final data = await _authService.refresh(refreshToken);
       _token = data['access_token'] as String;
+      final newRefresh = data['refresh_token'] as String? ?? refreshToken;
       await prefs.setString(AppConstants.tokenKey, _token!);
-      if (data['refresh_token'] != null) {
-        await prefs.setString(
-            AppConstants.refreshTokenKey, data['refresh_token'] as String);
-      }
+      await prefs.setString(AppConstants.refreshTokenKey, newRefresh);
+      DioClient.instance.setRefreshToken(newRefresh);
       _user = await _usuarioService.getMe(_token!);
       if (!_allowedRoles.contains(_user!.rol)) return false;
       _status = AuthStatus.authenticated;
@@ -79,13 +88,14 @@ class AuthProvider extends ChangeNotifier {
   Future<void> login(String correo, String password) async {
     final data = await _authService.login(correo, password);
     _token = data['access_token'] as String;
+    final loginRefresh = data['refresh_token'] as String?;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(AppConstants.tokenKey, _token!);
-    if (data['refresh_token'] != null) {
-      await prefs.setString(
-          AppConstants.refreshTokenKey, data['refresh_token'] as String);
+    if (loginRefresh != null) {
+      await prefs.setString(AppConstants.refreshTokenKey, loginRefresh);
     }
+    DioClient.instance.setRefreshToken(loginRefresh);
 
     _user = await _usuarioService.getMe(_token!);
 
@@ -135,6 +145,7 @@ class AuthProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(AppConstants.tokenKey);
     await prefs.remove(AppConstants.refreshTokenKey);
+    DioClient.instance.setRefreshToken(null);
     _token = null;
     _user = null;
   }

@@ -45,6 +45,12 @@ dependencies:
   audioplayers: ^6.0.0
   path_provider: ^2.1.4
 
+  # Stripe payments
+  flutter_stripe: ^12.6.0
+
+  # WebSocket
+  web_socket_channel: ^3.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

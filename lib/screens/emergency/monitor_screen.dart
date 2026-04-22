@@ -175,9 +175,72 @@ class _MonitorScreenState extends State<MonitorScreen> {
                       _EvidenciasCard(evidencias: incidente.evidencias),
                       const SizedBox(height: 16),
                     ],
+                    // Botón Chat — visible desde que el taller está asignado
+                    if (incidente.asignacion?.taller != null) ...[
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () =>
+                            context.push('/chat/${incidente.id}'),
+                        icon: const Icon(Icons.chat_rounded,
+                            color: AppTheme.secondary),
+                        label: const Text(
+                          'Chat de emergencia',
+                          style: TextStyle(color: AppTheme.secondary),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppTheme.secondary),
+                          minimumSize: const Size(double.infinity, 48),
+                        ),
+                      ),
+                    ],
+
+                    // Botón Pagar — solo cuando atendido y aún no pagado
+                    if (incidente.estado == 'atendido' && !incidente.pagado) ...[
+                      const SizedBox(height: 10),
+                      ElevatedButton.icon(
+                        onPressed: () =>
+                            context.push(
+                              '/payment/${incidente.id}'
+                              '?desc=${Uri.encodeComponent(incidente.descripcion ?? '')}',
+                            ),
+                        icon: const Icon(Icons.payment_rounded),
+                        label: const Text('Pagar servicio'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primary,
+                          minimumSize: const Size(double.infinity, 48),
+                        ),
+                      ),
+                    ],
+                    // Indicador de pago completado
+                    if (incidente.estado == 'atendido' && incidente.pagado) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: AppTheme.success.withAlpha(20),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                              color: AppTheme.success.withAlpha(80)),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.check_circle_rounded,
+                                color: AppTheme.success, size: 18),
+                            SizedBox(width: 8),
+                            Text('Servicio pagado',
+                                style: TextStyle(
+                                    color: AppTheme.success,
+                                    fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+
                     if (incidente.estado == 'atendido' ||
                         incidente.estado == 'cancelado') ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: () {
                           context.read<IncidenteProvider>().clearActivo();

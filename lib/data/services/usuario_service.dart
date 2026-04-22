@@ -1,13 +1,9 @@
 import 'package:dio/dio.dart';
 import '../models/usuario.dart';
-import '../../core/constants.dart';
+import '../../core/dio_client.dart';
 
 class UsuarioService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: AppConstants.baseUrl,
-    connectTimeout: const Duration(seconds: 15),
-    receiveTimeout: const Duration(seconds: 15),
-  ));
+  final Dio _dio = DioClient.instance.dio;
 
   Options _auth(String token) =>
       Options(headers: {'Authorization': 'Bearer $token'});

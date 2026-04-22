@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import '../../core/constants.dart';
+import '../../core/dio_client.dart';
 
 class TecnicoMe {
   final String id;
@@ -129,11 +129,7 @@ class OrdenActiva {
 }
 
 class TecnicoService {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: AppConstants.baseUrl,
-    connectTimeout: const Duration(seconds: 15),
-    receiveTimeout: const Duration(seconds: 15),
-  ));
+  final Dio _dio = DioClient.instance.dio;
 
   Options _auth(String token) =>
       Options(headers: {'Authorization': 'Bearer $token'});
