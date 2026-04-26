@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
+    id("com.google.gms.google-services")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
@@ -46,6 +47,10 @@ flutter {
 }
 
 dependencies {
+    // Firebase BoM — versiones compatibles automáticamente
+    implementation(platform("com.google.firebase:firebase-bom:34.12.0"))
+    implementation("com.google.firebase:firebase-messaging")
+
     implementation("com.google.android.material:material:1.11.0")
 
     // Compose BOM — asegura que todas las librerías de Compose tengan versiones compatibles

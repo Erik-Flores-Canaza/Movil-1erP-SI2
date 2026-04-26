@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:provider/provider.dart';
@@ -9,9 +10,23 @@ import 'providers/vehiculo_provider.dart';
 import 'providers/incidente_provider.dart';
 import 'providers/notificacion_provider.dart';
 import 'providers/pago_provider.dart';
+import 'providers/candidato_provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'firebase_options.dart';
 
-void main() {
+/// Handler para mensajes FCM cuando la app está en background o terminada.
+/// Debe ser una función top-level (no un método de clase).
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(dynamic message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Android muestra la notificación automáticamente si el mensaje tiene
+  // campo "notification". No se necesita hacer nada más aquí.
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   Stripe.publishableKey =
       'pk_test_51TOLnxExIDA2tDULzXwKjMcIBWHJjAzfkBP3VZCbaJnxhvO9i7xVnu9zNbJ6FASu4Ck0tYGuzNv0DcW3WU696AtO009E3QwoqK';
   final authProvider = AuthProvider();
@@ -58,6 +73,7 @@ class _EmergenciAutoAppState extends State<EmergenciAutoApp> {
         ChangeNotifierProvider(create: (_) => IncidenteProvider()),
         ChangeNotifierProvider(create: (_) => NotificacionProvider()),
         ChangeNotifierProvider(create: (_) => PagoProvider()),
+        ChangeNotifierProvider(create: (_) => CandidatoProvider()),
       ],
       child: MaterialApp.router(
         title: 'EmergenciAuto',

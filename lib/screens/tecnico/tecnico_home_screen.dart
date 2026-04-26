@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../data/services/tecnico_service.dart';
+import 'mis_servicios_screen.dart' show mostrarDialogoMonto;
 import '../../providers/auth_provider.dart';
 import '../../providers/notificacion_provider.dart';
 
@@ -273,16 +274,30 @@ class _TecnicoHomeScreenState extends State<TecnicoHomeScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('llegado_asignacion_id');
       if (mounted) {
-        setState(() { _orden = null; _llegado = false; });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Servicio completado. Buen trabajo.')),
         );
+        // Guardar incidenteId antes de limpiar la orden
+        final incidenteId = _orden!.incidenteId;
+        setState(() { _orden = null; _llegado = false; });
+        // Preguntar al técnico el monto a cobrar
+        await _pedirMonto(token, incidenteId);
       }
     } catch (e) {
       _showError('Error al completar el servicio.');
     } finally {
       if (mounted) setState(() => _completing = false);
     }
+  }
+
+  /// Muestra el diálogo para registrar el monto (lógica en mis_servicios_screen.dart).
+  Future<void> _pedirMonto(String token, String incidenteId) async {
+    if (!mounted) return;
+    await mostrarDialogoMonto(
+      context,
+      incidenteId: incidenteId,
+      onExito: () {}, // no necesita recargar nada desde aquí
+    );
   }
 
   void _showError(String msg) {
@@ -342,6 +357,11 @@ class _TecnicoHomeScreenState extends State<TecnicoHomeScreen> {
                   ),
                 ),
             ],
+          ),
+          IconButton(
+            tooltip: 'Mis servicios',
+            icon: const Icon(Icons.receipt_long_rounded),
+            onPressed: () => context.push('/tecnico-servicios'),
           ),
           IconButton(
             tooltip: 'Cerrar sesión',

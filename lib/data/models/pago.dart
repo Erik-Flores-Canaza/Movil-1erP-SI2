@@ -33,6 +33,7 @@ class Pago {
   final double comisionPlataforma;
   final double netoTaller;
   final String estado;
+  final String? metodoPago;
   final DateTime? pagadoEn;
   final DateTime? creadoEn;
 
@@ -43,6 +44,7 @@ class Pago {
     required this.comisionPlataforma,
     required this.netoTaller,
     required this.estado,
+    this.metodoPago,
     this.pagadoEn,
     this.creadoEn,
   });
@@ -54,6 +56,7 @@ class Pago {
         comisionPlataforma: (json['comision_plataforma'] as num).toDouble(),
         netoTaller: (json['neto_taller'] as num).toDouble(),
         estado: json['estado'] as String? ?? 'pendiente',
+        metodoPago: json['metodo_pago'] as String?,
         pagadoEn: json['pagado_en'] != null
             ? _parseUtc(json['pagado_en'].toString())
             : null,

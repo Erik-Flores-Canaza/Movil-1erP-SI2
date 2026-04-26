@@ -3,6 +3,7 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme.dart';
+import '../../data/models/pago.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/pago_provider.dart';
 
@@ -16,23 +17,49 @@ class PaymentScreen extends StatefulWidget {
 }
 
 class _PaymentScreenState extends State<PaymentScreen> {
-  final _montoController = TextEditingController(text: '50.00');
   bool _processing = false;
   bool _success = false;
   String? _errorMsg;
 
+  // Pago registrado por el técnico (leído de la BD)
+  Pago? _pagoPendiente;
+  bool _cargandoPago = true;
+  String? _errorCarga;
+  bool _pagoEfectivo = false; // true si ya fue cobrado en efectivo
+
   @override
-  void dispose() {
-    _montoController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _cargarPago());
+  }
+
+  Future<void> _cargarPago() async {
+    final token = context.read<AuthProvider>().token!;
+    final pagoProvider = context.read<PagoProvider>();
+    setState(() {
+      _cargandoPago = true;
+      _errorCarga = null;
+    });
+    final pago = await pagoProvider.cargarPago(token,
+        incidenteId: widget.incidenteId);
+    if (mounted) {
+      setState(() {
+        _cargandoPago = false;
+        if (pago == null) {
+          _errorCarga =
+              'El técnico aún no ha registrado el monto del servicio. Espera un momento e intenta de nuevo.';
+        } else if (pago.estado == 'pagado') {
+          _success = true;
+          _pagoEfectivo = pago.metodoPago == 'efectivo';
+        } else {
+          _pagoPendiente = pago;
+        }
+      });
+    }
   }
 
   Future<void> _pagar() async {
-    final monto = double.tryParse(_montoController.text.trim());
-    if (monto == null || monto <= 0) {
-      setState(() => _errorMsg = 'Ingresa un monto válido.');
-      return;
-    }
+    if (_pagoPendiente == null) return;
 
     final token = context.read<AuthProvider>().token!;
     final pagoProvider = context.read<PagoProvider>();
@@ -42,11 +69,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
     });
 
     try {
-      // 1. Crear intent en el backend
+      // 1. Crear intent en el backend (monto ya está en la BD)
       final intent = await pagoProvider.crearIntent(
         token,
         incidenteId: widget.incidenteId,
-        monto: monto,
       );
       if (intent == null) {
         setState(() {
@@ -56,7 +82,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         return;
       }
 
-      // 3. Inicializar el PaymentSheet
+      // 2. Inicializar el PaymentSheet
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
           merchantDisplayName: 'EmergenciAuto',
@@ -75,11 +101,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
       );
 
-      // 4. Presentar el PaymentSheet al usuario
+      // 3. Presentar el PaymentSheet al usuario
       await Stripe.instance.presentPaymentSheet();
 
-      // 5. Confirmar en el backend
-      // El payment_intent_id es la parte antes de "_secret_" en el client_secret
+      // 4. Confirmar en el backend
       final paymentIntentId = intent.clientSecret.split('_secret_').first;
       if (!mounted) return;
       final ok = await pagoProvider.confirmarPago(
@@ -111,19 +136,52 @@ class _PaymentScreenState extends State<PaymentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pagar servicio'),
-      ),
+      appBar: AppBar(title: const Text('Pagar servicio')),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: _success ? _buildSuccess() : _buildForm(),
+          child: _success
+              ? _buildSuccess()
+              : _cargandoPago
+                  ? const Center(child: CircularProgressIndicator())
+                  : _errorCarga != null
+                      ? _buildErrorCarga()
+                      : _buildForm(),
         ),
       ),
     );
   }
 
+  Widget _buildErrorCarga() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.hourglass_empty_rounded,
+              size: 64, color: AppTheme.textSecondary),
+          const SizedBox(height: 16),
+          Text(
+            _errorCarga!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _cargarPago,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Actualizar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSuccess() {
+    final titulo = _pagoEfectivo ? '¡Pago en efectivo registrado!' : '¡Pago completado!';
+    final mensaje = _pagoEfectivo
+        ? 'El técnico registró el cobro en efectivo. No es necesaria ninguna acción adicional.'
+        : 'Tu pago fue procesado correctamente. Gracias por usar EmergenciAuto.';
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -134,15 +192,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
             color: AppTheme.success.withAlpha(25),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.check_circle_rounded,
+          child: Icon(
+            _pagoEfectivo ? Icons.payments_rounded : Icons.check_circle_rounded,
             color: AppTheme.success,
             size: 44,
           ),
         ),
         const SizedBox(height: 24),
         Text(
-          '¡Pago completado!',
+          titulo,
           style: Theme.of(context)
               .textTheme
               .headlineSmall
@@ -150,10 +208,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Tu pago fue procesado correctamente. Gracias por usar EmergenciAuto.',
+        Text(
+          mensaje,
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
         ),
         const SizedBox(height: 40),
         ElevatedButton.icon(
@@ -166,10 +224,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 
   Widget _buildForm() {
+    final pago = _pagoPendiente!;
+    final comision = pago.comisionPlataforma;
+    final neto = pago.netoTaller;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
+        // Header del servicio
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -220,7 +282,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
         ),
         const SizedBox(height: 24),
 
-        // Monto
+        // Monto fijado por el técnico (solo lectura)
         const Text(
           'MONTO A PAGAR',
           style: TextStyle(
@@ -230,50 +292,58 @@ class _PaymentScreenState extends State<PaymentScreen> {
             letterSpacing: 0.5,
           ),
         ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _montoController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            color: AppTheme.textPrimary,
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.border),
           ),
-          decoration: InputDecoration(
-            prefixText: '\$ ',
-            prefixStyle: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.textSecondary,
-            ),
-            hintText: '0.00',
-            filled: true,
-            fillColor: AppTheme.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppTheme.border),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppTheme.border),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide:
-                  const BorderSide(color: AppTheme.primary, width: 2),
+          child: Text(
+            'Bs. ${pago.montoTotal.toStringAsFixed(2)}',
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.textPrimary,
             ),
           ),
         ),
         const SizedBox(height: 8),
-        const Text(
-          'El monto incluye comisión de servicio (5%).',
-          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+
+        // Desglose
+        Row(
+          children: [
+            const Expanded(
+              child: Text('Comisión plataforma (10%)',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 12)),
+            ),
+            Text('Bs. ${comision.toStringAsFixed(2)}',
+                style: const TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 12)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            const Expanded(
+              child: Text('Neto para el técnico',
+                  style: TextStyle(
+                      color: AppTheme.textSecondary, fontSize: 12)),
+            ),
+            Text('Bs. ${neto.toStringAsFixed(2)}',
+                style: const TextStyle(
+                    color: AppTheme.textSecondary, fontSize: 12)),
+          ],
         ),
 
         if (_errorMsg != null) ...[
           const SizedBox(height: 16),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: AppTheme.error.withAlpha(20),
               borderRadius: BorderRadius.circular(8),
@@ -285,11 +355,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                     color: AppTheme.error, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    _errorMsg!,
-                    style: const TextStyle(
-                        color: AppTheme.error, fontSize: 13),
-                  ),
+                  child: Text(_errorMsg!,
+                      style: const TextStyle(
+                          color: AppTheme.error, fontSize: 13)),
                 ),
               ],
             ),
@@ -317,11 +385,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   children: [
                     Icon(Icons.lock_rounded, size: 18),
                     SizedBox(width: 8),
-                    Text(
-                      'Pagar ahora',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
+                    Text('Pagar ahora',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w700)),
                   ],
                 ),
         ),
@@ -334,7 +400,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
             SizedBox(width: 4),
             Text(
               'Pagos procesados de forma segura por Stripe',
-              style: TextStyle(color: AppTheme.textSecondary, fontSize: 11),
+              style:
+                  TextStyle(color: AppTheme.textSecondary, fontSize: 11),
             ),
           ],
         ),

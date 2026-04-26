@@ -8,6 +8,7 @@ import '../../core/constants.dart';
 import '../../core/theme.dart';
 import '../../data/models/incidente.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/candidato_provider.dart';
 import '../../providers/incidente_provider.dart';
 
 class MonitorScreen extends StatefulWidget {
@@ -25,7 +26,13 @@ class _MonitorScreenState extends State<MonitorScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _poll());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _poll();
+      final token = context.read<AuthProvider>().token;
+      if (token != null) {
+        context.read<CandidatoProvider>().cargarFavoritos(token);
+      }
+    });
     _timer = Timer.periodic(const Duration(seconds: 10), (_) => _poll());
   }
 
@@ -160,6 +167,7 @@ class _MonitorScreenState extends State<MonitorScreen> {
                       _TallerCard(
                         taller: incidente.asignacion!.taller!,
                         etaMinutos: incidente.asignacion!.etaMinutos,
+                        mostrarFavorito: incidente.estado == 'atendido',
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -639,19 +647,66 @@ class _PhoneRow extends StatelessWidget {
 class _TallerCard extends StatelessWidget {
   final TallerResumen taller;
   final int? etaMinutos;
-  const _TallerCard({required this.taller, this.etaMinutos});
+  final bool mostrarFavorito;
+  const _TallerCard({
+    required this.taller,
+    this.etaMinutos,
+    this.mostrarFavorito = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final candidatoProv = context.watch<CandidatoProvider>();
+    final esFav = candidatoProv.esFavorito(taller.id);
+
     return _InfoCard(
       title: 'Taller asignado',
       icon: Icons.store_rounded,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            taller.nombre,
-            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  taller.nombre,
+                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                ),
+              ),
+              if (mostrarFavorito) ...[
+                GestureDetector(
+                  onTap: () async {
+                    final token = context.read<AuthProvider>().token;
+                    if (token == null) return;
+                    await context.read<CandidatoProvider>().toggleFavorito(
+                          token,
+                          tallerId: taller.id,
+                          esFavoritoActual: esFav,
+                        );
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            esFav
+                                ? '${taller.nombre} quitado de favoritos'
+                                : '${taller.nombre} agregado a favoritos',
+                          ),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Icon(
+                      esFav ? Icons.star_rounded : Icons.star_border_rounded,
+                      color: esFav ? AppTheme.secondary : AppTheme.textSecondary,
+                      size: 22,
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
           if (taller.telefono != null) ...[
             const SizedBox(height: 8),

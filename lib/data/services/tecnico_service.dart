@@ -128,6 +128,46 @@ class OrdenActiva {
       (incidenteClasificacion ?? '-');
 }
 
+// ── Historial de servicios del técnico ────────────────────────────────────────
+
+class ServicioHistorial {
+  final String incidenteId;
+  final String clienteNombre;
+  final String? clasificacionIa;
+  final String? prioridad;
+  final DateTime? completadoEn;
+  final String? pagoEstado;   // 'pendiente' | 'pagado' | null
+  final double? pagoMonto;
+  final String? pagoMetodo;   // 'efectivo' | 'stripe' | null
+
+  const ServicioHistorial({
+    required this.incidenteId,
+    required this.clienteNombre,
+    this.clasificacionIa,
+    this.prioridad,
+    this.completadoEn,
+    this.pagoEstado,
+    this.pagoMonto,
+    this.pagoMetodo,
+  });
+
+  factory ServicioHistorial.fromJson(Map<String, dynamic> json) =>
+      ServicioHistorial(
+        incidenteId: json['incidente_id'].toString(),
+        clienteNombre: json['cliente_nombre'] as String? ?? '–',
+        clasificacionIa: json['clasificacion_ia'] as String?,
+        prioridad: json['prioridad'] as String?,
+        completadoEn: json['completado_en'] != null
+            ? DateTime.tryParse('${json['completado_en']}Z')
+            : null,
+        pagoEstado: json['pago_estado'] as String?,
+        pagoMonto: (json['pago_monto'] as num?)?.toDouble(),
+        pagoMetodo: json['pago_metodo'] as String?,
+      );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 class TecnicoService {
   final Dio _dio = DioClient.instance.dio;
 
@@ -176,6 +216,35 @@ class TecnicoService {
       '/asignaciones/$asignacionId/tecnico-en-sitio',
       options: _auth(token),
     );
+  }
+
+  /// CU-07 Paso 0: El técnico registra el monto y el método de cobro.
+  /// [metodoPago] = 'efectivo' cierra el pago en sitio.
+  /// [metodoPago] = 'stripe'  deja pendiente para pago online del cliente.
+  Future<void> registrarMonto(
+    String token, {
+    required String incidenteId,
+    required double monto,
+    String metodoPago = 'stripe',
+  }) async {
+    await _dio.post(
+      '/pagos/registrar-monto',
+      data: {
+        'incidente_id': incidenteId,
+        'monto': monto,
+        'metodo_pago': metodoPago,
+      },
+      options: _auth(token),
+    );
+  }
+
+  /// Historial de servicios completados por el técnico
+  Future<List<ServicioHistorial>> getMisServicios(String token) async {
+    final response = await _dio.get('/tecnicos/me/servicios', options: _auth(token));
+    final list = response.data as List<dynamic>;
+    return list
+        .map((e) => ServicioHistorial.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   /// Actualización silenciosa de ubicación (sin UI, para auto-polling)

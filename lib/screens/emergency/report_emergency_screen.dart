@@ -235,11 +235,12 @@ class _ReportEmergencyScreenState extends State<ReportEmergencyScreen> {
         } catch (_) {}
       }
 
-      // Paso 3 — análisis IA + asignación
+      // Paso 3 — análisis IA (clasifica el problema, sin asignar taller aún)
       await provider.analizar(token, incidenteId: inc.id);
 
       if (!mounted) return;
-      router.pushReplacement('/monitor/${inc.id}');
+      // Navegar a la pantalla de selección de taller
+      router.pushReplacement('/candidatos/${inc.id}');
     } catch (e) {
       // Si el incidente fue creado pero analizar falló, cancelarlo para
       // no dejar un incidente huérfano sin evidencias en la BD.
@@ -861,7 +862,7 @@ class _Step3Confirmar extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'La IA analizará tus fotos y nota de voz para clasificar el problema y asignar el taller más adecuado.',
+                    'La IA analizará tus fotos y nota de voz para clasificar el problema. Luego podrás elegir el taller de tu preferencia.',
                     style: TextStyle(
                         color: AppTheme.textSecondary, fontSize: 12),
                   ),

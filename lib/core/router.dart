@@ -10,8 +10,10 @@ import '../screens/vehicles/vehicles_screen.dart';
 import '../screens/emergency/report_emergency_screen.dart';
 import '../screens/emergency/monitor_screen.dart';
 import '../screens/emergency/my_emergencies_screen.dart';
+import '../screens/emergency/candidatos_screen.dart';
 import '../screens/notifications/notifications_screen.dart';
 import '../screens/tecnico/tecnico_home_screen.dart';
+import '../screens/tecnico/mis_servicios_screen.dart';
 import '../screens/payment/payment_screen.dart';
 import '../screens/chat/chat_screen.dart';
 
@@ -124,6 +126,16 @@ GoRouter createRouter(AuthProvider authProvider) {
         ),
       ),
       GoRoute(
+        path: '/candidatos/:id',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: CandidatosScreen(
+            incidenteId: state.pathParameters['id']!,
+          ),
+          transitionsBuilder: _slideFromBottom,
+        ),
+      ),
+      GoRoute(
         path: '/notifications',
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
@@ -164,6 +176,14 @@ GoRouter createRouter(AuthProvider authProvider) {
           key: state.pageKey,
           child: const TecnicoHomeScreen(),
           transitionsBuilder: _fadeTransition,
+        ),
+      ),
+      GoRoute(
+        path: '/tecnico-servicios',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const MisServiciosScreen(),
+          transitionsBuilder: _slideFromRight,
         ),
       ),
     ],

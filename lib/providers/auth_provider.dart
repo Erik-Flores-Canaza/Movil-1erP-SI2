@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/models/usuario.dart';
 import '../data/services/auth_service.dart';
 import '../data/services/usuario_service.dart';
+import '../data/services/fcm_service.dart';
 import '../core/constants.dart';
 import '../core/dio_client.dart';
 
@@ -11,6 +12,7 @@ enum AuthStatus { unknown, authenticated, unauthenticated }
 class AuthProvider extends ChangeNotifier {
   final _authService = AuthService();
   final _usuarioService = UsuarioService();
+  final _fcmService = FcmService();
 
   AuthStatus _status = AuthStatus.unknown;
   Usuario? _user;
@@ -110,6 +112,9 @@ class AuthProvider extends ChangeNotifier {
 
     _status = AuthStatus.authenticated;
     notifyListeners();
+
+    // Registrar token FCM para notificaciones push
+    _fcmService.init(_token!);
   }
 
   Future<void> logout() async {

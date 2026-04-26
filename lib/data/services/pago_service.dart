@@ -8,21 +8,31 @@ class PagoService {
   Options _auth(String token) =>
       Options(headers: {'Authorization': 'Bearer $token'});
 
-  /// CU-07: Crea un PaymentIntent en Stripe y devuelve el client_secret
+  /// CU-07: Obtiene el pago pendiente registrado por el técnico.
+  /// Lanza DioException 404 si el técnico aún no registró el monto.
+  Future<Pago> getPago(String token, {required String incidenteId}) async {
+    final response = await _dio.get(
+      '/pagos/$incidenteId',
+      options: _auth(token),
+    );
+    return Pago.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// CU-07 Paso 1: Crea un PaymentIntent en Stripe.
+  /// El monto ya fue fijado por el técnico — el backend lo lee de la BD.
   Future<CrearIntentResponse> crearIntent(
     String token, {
     required String incidenteId,
-    required double monto,
   }) async {
     final response = await _dio.post(
       '/pagos/crear-intent',
-      data: {'incidente_id': incidenteId, 'monto': monto},
+      data: {'incidente_id': incidenteId},
       options: _auth(token),
     );
     return CrearIntentResponse.fromJson(response.data as Map<String, dynamic>);
   }
 
-  /// CU-07: Confirma el pago ya procesado por el cliente en el PaymentSheet
+  /// CU-07 Paso 2: Confirma el pago ya procesado por el cliente en el PaymentSheet
   Future<Pago> confirmarPago(
     String token, {
     required String incidenteId,

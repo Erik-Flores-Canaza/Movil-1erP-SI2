@@ -31,7 +31,6 @@ migrate_working_dir/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
-pubspec.lock
 .pub-cache/
 .pub/
 /build/
@@ -92,12 +91,20 @@ linux/flutter/ephemeral/
 web/
 .web/
 
+# Firebase CLI config (contiene projectId/appId — no subir)
+firebase.json
+
 # Environment and secrets
 .env
 .env.local
 .env.*.local
 .env.*.secret
 firebase_credentials.json
+
+# Firebase config files (contienen API keys — no subir)
+google-services.json
+GoogleService-Info.plist
+lib/firebase_options.dart
 
 # OS
 Thumbs.db
